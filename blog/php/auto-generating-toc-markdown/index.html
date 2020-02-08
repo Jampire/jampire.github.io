@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+        <meta name="robots" content="index, follow">
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="Dzianis Kotau Tech Blog">
+    <meta name="author" content="Dzianis Kotau">
+    <meta name="url" content="https://dzianiskotau.com">
+    <meta name="copyright" content="Dzianis Kotau Tech Blog">
+
+    <title>Auto Generating Table of Contents in Markdown | Dzianis Kotau Tech Blog</title>
+
+    <link rel="apple-touch-startup-image" href="https://dzianiskotau.com/assets/icons/favicon/2048.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+<link rel="shortcut icon" sizes="16x16" href="https://dzianiskotau.com/assets/icons/favicon/favicon-16x16.png">
+<link rel="shortcut icon" sizes="32x32" href="https://dzianiskotau.com/assets/icons/favicon/favicon-32x32.png">
+<link rel="shortcut icon" sizes="57x57" href="https://dzianiskotau.com/assets/icons/favicon/apple-icon-57x57.png">
+<link rel="shortcut icon" sizes="60x60" href="https://dzianiskotau.com/assets/icons/favicon/apple-icon-60x60.png">
+<link rel="shortcut icon" sizes="72x72" href="https://dzianiskotau.com/assets/icons/favicon/apple-icon-72x72.png">
+<link rel="shortcut icon" sizes="76x76" href="https://dzianiskotau.com/assets/icons/favicon/apple-icon-76x76.png">
+<link rel="shortcut icon" sizes="96x96" href="https://dzianiskotau.com/assets/icons/favicon/favicon-96x96.png">
+<link rel="shortcut icon" sizes="114x114" href="https://dzianiskotau.com/assets/icons/favicon/apple-icon-114x114.png">
+<link rel="shortcut icon" sizes="120x120" href="https://dzianiskotau.com/assets/icons/favicon/apple-icon-120x120.png">
+<link rel="shortcut icon" sizes="144x144" href="https://dzianiskotau.com/assets/icons/favicon/apple-icon-144x144.png">
+<link rel="shortcut icon" sizes="152x152" href="https://dzianiskotau.com/assets/icons/favicon/apple-icon-152x152.png">
+<link rel="shortcut icon" sizes="180x180" href="https://dzianiskotau.com/assets/icons/favicon/apple-icon-180x180.png">
+<link rel="shortcut icon" sizes="192x192" href="https://dzianiskotau.com/assets/icons/favicon/android-icon-192x192.png">
+<link rel="apple-touch-icon" sizes="57x57" href="https://dzianiskotau.com/assets/icons/favicon/apple-icon-57x57.png">
+<link rel="apple-touch-icon" sizes="60x60" href="https://dzianiskotau.com/assets/icons/favicon/apple-icon-60x60.png">
+<link rel="apple-touch-icon" sizes="72x72" href="https://dzianiskotau.com/assets/icons/favicon/apple-icon-72x72.png">
+<link rel="apple-touch-icon" sizes="76x76" href="https://dzianiskotau.com/assets/icons/favicon/apple-icon-76x76.png">
+<link rel="apple-touch-icon" sizes="114x114" href="https://dzianiskotau.com/assets/icons/favicon/apple-icon-114x114.png">
+<link rel="apple-touch-icon" sizes="120x120" href="https://dzianiskotau.com/assets/icons/favicon/apple-icon-120x120.png">
+<link rel="apple-touch-icon" sizes="144x144" href="https://dzianiskotau.com/assets/icons/favicon/apple-icon-144x144.png">
+<link rel="apple-touch-icon" sizes="152x152" href="https://dzianiskotau.com/assets/icons/favicon/apple-icon-152x152.png">
+<link rel="apple-touch-icon" sizes="180x180" href="https://dzianiskotau.com/assets/icons/favicon/apple-icon-180x180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="https://dzianiskotau.com/assets/icons/favicon/android-icon-192x192.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://dzianiskotau.com/assets/icons/favicon/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="96x96" href="https://dzianiskotau.com/assets/icons/favicon/favicon-96x96.png">
+<link rel="icon" type="image/png" sizes="16x16" href="https://dzianiskotau.com/assets/icons/favicon/favicon-16x16.png">
+<meta name="msapplication-TileColor" content="#ffffff">
+<meta name="msapplication-TileImage" content="https://dzianiskotau.com/assets/icons/favicon/ms-icon-144x144.png">
+<meta name="theme-color" content="#ffffff">
+
+        <!-- Facebook -->
+<meta property="og:url" content="https://dzianiskotau.com/blog/php/auto-generating-toc-markdown/" />
+<meta property="og:title" content="Auto Generating Table of Contents in Markdown" />
+<meta property="og:description" content="Most popular PHP Markdown parsers like Markdown Extra (is used by Sculpin) or Parsedown Extra (is used by Jigsaw) can&#039;t generated Table of Contents. Despite this, Sculpin can generate TOC. I became interested in it and researched how Sculpin does this." />
+<meta property="og:type" content="article" />
+<meta property="og:image" content="https://dzianiskotau.com/assets/images/auto_generating_toc_markdown/toc0.png" />
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image:src" content="https://dzianiskotau.com/assets/images/auto_generating_toc_markdown/toc0.png">
+<meta name="twitter:site" content="@Jampire2" />
+<meta name="twitter:creator" content="@Jampire2" />
+<meta name="twitter:title" content="Auto Generating Table of Contents in Markdown" />
+<meta name="twitter:description" content="Most popular PHP Markdown parsers like Markdown Extra (is used by Sculpin) or Parsedown Extra (is used by Jigsaw) can&#039;t generated Table of Contents. Despite this, Sculpin can generate TOC. I became interested in it and researched how Sculpin does this." />
+<meta name="twitter:url" content="https://dzianiskotau.com/blog/php/auto-generating-toc-markdown" />
+
+
+    <meta name="yandex-verification" content="65982bb92c634a60" />
+
+    <link rel="stylesheet" href="https://dzianiskotau.com/build/theme.css">
+    <link rel="stylesheet" href="https://dzianiskotau.com/build/app.css">
+
+    <link rel="alternate" type="application/atom+xml" href="https://dzianiskotau.com/atom.xml" title="Dzianis Kotau Tech Blog activity feed" />
+</head>
+
+<body>
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="https://dzianiskotau.com/">Dzianis Kotau Tech Blog</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarResponsive">
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item active">
+                        <a class="nav-link" href="https://dzianiskotau.com/">Home
+                            <span class="sr-only">(current)</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://dzianiskotau.com/php/">PHP</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://dzianiskotau.com/about/">About</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://dzianiskotau.com/atom.xml">RSS</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Content -->
+    <div class="container">
+        <div class="row">
+            <!-- Blog Entries Column -->
+            <div class="col-lg-8">
+                
+        <!-- Title -->
+        <h1 class="mt-4">Auto Generating Table of Contents in Markdown</h1>
+
+        <!-- Author -->
+        <p class="lead">by <a href="https://dzianiskotau.com/about">Dzianis Kotau</a></p>
+        <hr>
+
+        <!-- Date/Time -->
+        <p>Posted on January 26, 2020 at 10:47</p>
+        <hr>
+
+                    <!-- Preview Image -->
+            <div class="center">
+                <img class="img-thumbnail" src="https://dzianiskotau.com/assets/images/auto_generating_toc_markdown/toc0.png" alt="Auto generating Markdown TOC">
+            </div>
+                <hr>
+
+        <!-- Post Content -->
+        <p>Most popular PHP Markdown parsers like <a href="https://github.com/michelf/php-markdown" title="Markdown Extra" target="_blank">Markdown Extra</a> (is used by <a href="https://sculpin.io/" title="Sculpin" target="_blank">Sculpin</a>) or <a href="https://github.com/erusev/parsedown-extra" title="Parsedown Extra" target="_blank">Parsedown Extra</a> 
+(is used by <a href="https://jigsaw.tighten.co/" title="Jigsaw" target="_blank">Jigsaw</a>) can't generated Table of Contents. Despite this, Sculpin can generate <abbr title="Table of Contents">TOC</abbr>.
+I became interested in it and researched how Sculpin does this.</p>
+
+<h2 id="table-of-contents">Table of Contents</h2>
+
+<ul>
+<li><a href="#researching">Researching</a></li>
+<li><a href="#auto-generating">Auto generating</a></li>
+<li><a href="#standalone-library">Standalone library</a></li>
+<li><a href="#additional-notes">Additional notes</a></li>
+</ul>
+
+<h2 id="researching">Researching</h2>
+
+<p>While reading Sculpin's core code I found such class:</p>
+
+<pre><code class="php">&lt;?php
+
+// vendor/sculpin/sculpin/src/Sculpin/Bundle/MarkdownBundle/MarkdownConverter.php
+
+// ...
+
+final class MarkdownConverter implements ConverterInterface, EventSubscriberInterface
+{
+    public function __construct(ParserInterface $markdown, array $extensions = [])
+    {
+        $this-&gt;markdown = $markdown;
+        if ($this-&gt;markdown instanceof Markdown) {
+            $this-&gt;markdown-&gt;header_id_func = [$this, 'generateHeaderId'];
+        }
+        $this-&gt;extensions = $extensions;
+    }
+
+    // ...
+
+    /**
+     * This method is called to generate an id="" attribute for a header.
+     *
+     * @internal
+     *
+     * @param string $headerText raw markdown input for the header name
+     */
+    public function generateHeaderId(string $headerText): string
+    {
+
+        // $headerText is completely raw markdown input. We need to strip it
+        // from all markup, because we are only interested in the actual 'text'
+        // part of it.
+
+        // Step 1: Remove html tags.
+        $result = strip_tags($headerText);
+
+        // Step 2: Remove all markdown links. To do this, we simply remove
+        // everything between ( and ) if the ( occurs right after a ].
+        $result = preg_replace('%
+            (?&lt;= \\]) # Look behind to find ]
+            (
+                \\(     # match (
+                [^\\)]* # match everything except )
+                \\)     # match )
+            )
+
+            %x', '', $result);
+
+        // Step 3: Convert spaces to dashes, and remove unwanted special
+        // characters.
+        $map = [
+            ' ' =&gt; '-',
+            '(' =&gt; '',
+            ')' =&gt; '',
+            '[' =&gt; '',
+            ']' =&gt; '',
+        ];
+        return rawurlencode(strtolower(
+            strtr($result, $map)
+        ));
+    }
+}
+</code></pre>
+
+<p>Look at his line of code</p>
+
+<pre><code class="php">$this-&gt;markdown-&gt;header_id_func = [$this, 'generateHeaderId'];
+</code></pre>
+
+<p><code>header_id_func</code> is Markdown's callback function to generate header id attribute:</p>
+
+<pre><code class="php">&lt;?php
+
+// vendor/michelf/php-markdown/Michelf/Markdown.php
+
+/**
+ * Optional header id="" generation callback function.
+ * @var callable|null
+ */
+public $header_id_func = null;
+
+/**
+ * If a header_id_func property is set, we can use it to automatically
+ * generate an id attribute.
+ *
+ * This method returns a string in the form id="foo", or an empty string
+ * otherwise.
+ * @param  string $headerValue
+ * @return string
+ */
+protected function _generateIdFromHeaderValue($headerValue) {
+    if (!is_callable($this-&gt;header_id_func)) {
+        return "";
+    }
+
+    $idValue = call_user_func($this-&gt;header_id_func, $headerValue);
+    if (!$idValue) {
+        return "";
+    }
+
+    return ' id="' . $this-&gt;encodeAttribute($idValue) . '"';
+}
+</code></pre>
+
+<p>and <code>generateHeaderId()</code> method from Sculpin core does the rest of the job.</p>
+
+<h2 id="auto-generating">Auto generating</h2>
+
+<div class="center">
+
+<p><img src="/assets/images/auto_generating_toc_markdown/phpstrom_markdown_plugin.png" alt="Phpstrom Markdown Plugin" title="" class="simple-rounded" /></p>
+
+</div>
+
+<p>The good news here is that you don't even need to care about manual and unique <code>id</code> generating. <a href="https://www.jetbrains.com/phpstorm/" title="PhpStorm" target="_blank">PhpStorm IDE</a> 
+(that most PHP developers should use) with Markdown (bundled) plugin will help you. PhpStorm uses the same algorithm 
+for <code>id</code> generating that Sculpin's <code>generateHeaderId()</code> method does. All you need to do is to write your Markdown 
+article with headers, create <abbr title="Table of Contents">TOC</abbr> and then use PhpStorm's autocompletion:</p>
+
+<div class="center">
+
+<p><img src="/assets/images/auto_generating_toc_markdown/auto_generating.gif" alt="TOC Auto Generating" title="" class="simple-rounded" /></p>
+
+</div>
+
+<p>By the way, <a href="https://github.github.com/gfm/" title="GFM" target="_blank">GitHub</a> uses the same algorithm too. So, you can use PhpStorm to easily create README.md and 
+other Markdown files.</p>
+
+<h2 id="standalone-library">Standalone library</h2>
+
+<p>I decided to extract Sculpin's solution into standalone library that anyone can use it in their own work. I published 
+sources on <a href="https://github.com/Jampire/toc-markdown-extra" title="TOC Markdown Extra" target="_blank">my GitHub</a>. Please, feel free to use it.</p>
+
+<h2 id="additional-notes">Additional notes</h2>
+
+<p><a href="https://github.com/michelf/php-markdown/pull/26#issuecomment-5253043" title="" target="_blank">The point of view</a> of PHP Markdown's author is that <abbr title="Table of Contents">TOC</abbr> generating is <strong>not</strong> the work of his parser. So, it will 
+be never included in his library.</p>
+
+        <hr>
+
+    <div class="taxonomies">
+                    <span class="categories">
+                                    <a href="https://dzianiskotau.com/blog/categories/php" class="btn btn-primary btn-sm" role="button" title="Categories">php</a>
+                            </span>
+                            <span class="tags">
+                                    <a href="https://dzianiskotau.com/blog/tags/TOC" class="btn btn-success btn-sm" role="button" title="Tags">TOC</a>
+                                    <a href="https://dzianiskotau.com/blog/tags/Table%20of%20Contents" class="btn btn-success btn-sm" role="button" title="Tags">Table of Contents</a>
+                                    <a href="https://dzianiskotau.com/blog/tags/Markdown" class="btn btn-success btn-sm" role="button" title="Tags">Markdown</a>
+                                    <a href="https://dzianiskotau.com/blog/tags/Markdown%20Extra" class="btn btn-success btn-sm" role="button" title="Tags">Markdown Extra</a>
+                                    <a href="https://dzianiskotau.com/blog/tags/auto%20generating" class="btn btn-success btn-sm" role="button" title="Tags">auto generating</a>
+                                    <a href="https://dzianiskotau.com/blog/tags/Sculpin" class="btn btn-success btn-sm" role="button" title="Tags">Sculpin</a>
+                                    <a href="https://dzianiskotau.com/blog/tags/JetBrains" class="btn btn-success btn-sm" role="button" title="Tags">JetBrains</a>
+                                    <a href="https://dzianiskotau.com/blog/tags/PhpStorm" class="btn btn-success btn-sm" role="button" title="Tags">PhpStorm</a>
+                            </span>
+            </div>
+            <hr>
+    
+            <div id="mc-link">Comments</div>
+        <div id="mc-container"></div>
+        <script type="text/javascript">
+            cackle_widget = window.cackle_widget || [];
+            cackle_widget.push({widget: 'Comment', id: 71174});
+            (function() {
+                const mc = document.createElement('script');
+                mc.type = 'text/javascript';
+                mc.async = true;
+                mc.src = ('https:' === document.location.protocol ? 'https' : 'http') + '://cackle.me/widget.js';
+                const s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(mc, s.nextSibling);
+            })();
+        </script>
+        <noscript>Please enable JavaScript to view the comments.</noscript>
+                </div>
+
+            <!-- Sidebar Widgets Column -->
+            <div class="col-md-4">
+                <!-- About me Widget -->
+<div class="card my-4">
+    <h5 class="card-header">About Me</h5>
+    <div class="card-body">
+        <img src="https://dzianiskotau.com/assets/images/about/me.jpg" class="img-fluid img-thumbnail rounded mx-auto d-block" alt="Dzianis Kotau">
+        <p class="text-justify">
+            Мy name is <strong>Dzianis Kotau</strong>. I'm Software Architect and
+            <a href="https://www.zend-zce.com/en/yellow-pages/ZEND017455" target="_blank">Zend Certified PHP Engineer</a>.
+            I'm PHP evangelist and loved in it.
+        </p>
+    </div>
+</div>
+                <!-- Social Icons Widget -->
+<div class="card my-4">
+    <h5 class="card-header">Contacts</h5>
+    <div class="card-body">
+        <ul class="list-inline text-center">
+            <li class="list-inline-item">
+                <a href="https://www.linkedin.com/in/jampire/" target="_blank" title="Linkedin">
+                    <span class="fa-stack">
+                        <i class="fas fa-circle fa-stack-2x"></i>
+                        <i class="fab fa-linkedin-in fa-stack-1x fa-inverse"></i>
+                    </span>
+                </a>
+            </li>
+            <li class="list-inline-item">
+                <a href="https://github.com/Jampire" target="_blank" title="GitHub">
+                    <span class="fa-stack">
+                        <i class="fas fa-circle fa-stack-2x"></i>
+                        <i class="fab fa-github fa-stack-1x fa-inverse"></i>
+                    </span>
+                </a>
+            </li>
+            <li class="list-inline-item">
+                <a href="https://www.facebook.com/dzianis.kotau.1984" target="_blank" title="Facebook">
+                    <span class="fa-stack">
+                        <i class="fas fa-circle fa-stack-2x"></i>
+                        <i class="fab fa-facebook-f fa-stack-1x fa-inverse"></i>
+                    </span>
+                </a>
+            </li>
+            <li class="list-inline-item">
+                <a href="https://t.me/JampireBlr" target="_blank" title="Telegram">
+                    <span class="fa-stack">
+                        <i class="fas fa-circle fa-stack-2x"></i>
+                        <i class="fab fa-telegram fa-stack-1x fa-inverse"></i>
+                    </span>
+                </a>
+            </li>
+            <li class="list-inline-item">
+                <a href="https://twitter.com/Jampire2" target="_blank" title="Twitter">
+                    <span class="fa-stack">
+                        <i class="fas fa-circle fa-stack-2x"></i>
+                        <i class="fab fa-twitter fa-stack-1x fa-inverse"></i>
+                    </span>
+                </a>
+            </li>
+            <li class="list-inline-item">
+                <a href="mailto:me@dzianiskotau.com?subject=Feedback" target="_top" title="E-mail">
+                    <span class="fa-stack">
+                        <i class="fas fa-circle fa-stack-2x"></i>
+                        <i class="fas fa-envelope fa-stack-1x fa-inverse"></i>
+                    </span>
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>
+            </div>
+        </div>
+    <!-- /.row -->
+
+    </div>
+    <!-- /.container -->
+
+    <!-- Footer -->
+    <footer class="py-5 bg-dark">
+        <div class="container">
+            <p class="m-0 text-center text-white">
+                Copyright &copy; 2019 - 2020 Dzianis Kotau Tech Blog<br>
+                <small>Powered by <a href="https://sculpin.io/" target="_blank" title="Sculpin">Sculpin</a></small>
+            </p>
+        </div>
+        <!-- /.container -->
+    </footer>
+
+    <script src="https://dzianiskotau.com/build/app.js" type="text/javascript"></script>
+
+    <!-- Custom scripts for this template -->
+    <script src="https://dzianiskotau.com/build/theme.js" type="text/javascript"></script>
+
+        
+    
+        
+</body>
+</html>

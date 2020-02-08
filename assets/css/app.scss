@@ -1,0 +1,30 @@
+.image-right {
+    float: right;
+}
+
+.image-left {
+    float: left;
+}
+
+div.ul-columns-2 ul {
+    columns: 2;
+    -webkit-columns: 2;
+    -moz-columns: 2;
+}
+
+article.post-preview img {
+    float: left;
+    max-width: 250px;
+    width: 100%;
+    height: auto;
+}
+
+div.post-content span.excerpt-image img {
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+}
+
+div.center {
+    text-align: center;
+}

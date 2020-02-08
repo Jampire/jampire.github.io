@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://dzianiskotau.com</loc>
+    <lastmod>2020-02-08</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+    <url>
+    <loc>https://dzianiskotau.com/blog/php/auto-generating-toc-markdown</loc>
+    <lastmod>2020-01-26T10:47:00+03:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+    <url>
+    <loc>https://dzianiskotau.com/blog/php/ibm-app-id-provider-oauth2-client</loc>
+    <lastmod>2019-12-30T11:23:00+03:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  </urlset>

@@ -1,0 +1,759 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+    <title><![CDATA[Dzianis Kotau Tech Blog]]></title>
+    <link href="https://dzianiskotau.com/blog/tags/single sign on.xml" rel="self"/>
+    <link href="https://dzianiskotau.com/"/>
+    <updated>2020-02-08T22:59:57+03:00</updated>
+    <id>https://dzianiskotau.com/</id>
+            <author>
+            <name><![CDATA[Dzianis Kotau]]></name>                    </author>
+        <generator uri="https://sculpin.io/">Sculpin</generator>
+            <entry>
+            <title type="html"><![CDATA[IBM App ID Provider for OAuth 2.0 Client]]></title>
+            <link href="https://dzianiskotau.com/blog/php/ibm-app-id-provider-oauth2-client"/>
+            <updated>2019-12-30T11:23:00+03:00</updated>
+            <id>https://dzianiskotau.com/blog/php/ibm-app-id-provider-oauth2-client</id>
+            <content type="html"><![CDATA[<p>Let me introduce you my own <a href="https://github.com/Jampire/oauth2-appid" title="oauth2-appid" target="_blank">IBM App ID Provider</a> for  the <a href="https://github.com/thephpleague/oauth2-client" title="oauth2-client" target="_blank">PHP League's OAuth 2.0 Client</a>. It's not about 
+<a href="https://cloud.ibm.com/catalog/services/app-id#about" title="App ID" target="_blank">IBM App ID service</a>, nor  PHP League's OAuth 2.0 Client. You can read about those <a href="https://cloud.ibm.com/docs/services/appid?topic=appid-getting-started" title="App ID Docs" target="_blank">here</a> and <a href="https://github.com/thephpleague/oauth2-client" title="oauth2-client" target="_blank">here</a>. 
+In brief, IBM App ID is an <a href="https://cloud.ibm.com/" title="IBM Cloud" target="_blank">IBM Cloud</a> service that hides implementation of different OAuth providers (Facebook, 
+Google, SAML, etc.) and allows you to use them in one way. This article is about a provider that you can use to 
+communicate with IBM App ID service using standalone PHP or <a href="https://symfony.com/" title="Symfony" target="_blank">Symfony</a>.</p>
+
+<h2 id="table-of-contents">Table of Contents</h2>
+
+<ul>
+<li><a href="#standalone-provider">Standalone provider</a>
+
+<ul>
+<li><a href="#authorization-code-flow">Authorization Code Flow</a></li>
+<li><a href="#final-result">Final result</a></li>
+</ul></li>
+<li><a href="#symfony-integration">Symfony integration</a>
+
+<ul>
+<li><a href="#step-1---configuring-security">Step 1 - Configuring Security</a></li>
+<li><a href="#step-2---add-the-client-controller">Step 2 - Add the client controller</a></li>
+<li><a href="#step-3---add-the-guard-authenticator">Step 3 - Add the guard authenticator</a></li>
+<li><a href="#step-4---add-user-security">Step 4 - Add User security</a></li>
+</ul></li>
+</ul>
+
+<h2 id="standalone-provider">Standalone provider</h2>
+
+<p>Let's start from standalone PHP. To install the package run</p>
+
+<pre><code>composer require jampire/oauth2-appid
+</code></pre>
+
+<p>Usage is the same as The League's OAuth client, using <code>\Jampire\OAuth2\Client\Provider\AppIdProvider</code> as the provider.</p>
+
+<p>Use <code>baseAuthUri</code> to specify the IBM App ID base server URL. You can lookup the correct value from the Application 
+settings of your IBM App ID service under <code>oAuthServerUrl</code> without <code>tenantId</code> section, eg. 
+<code>https://us-south.appid.cloud.ibm.com/oauth/v4</code>.</p>
+
+<p>Use <code>tenantId</code> to specify the IBM App ID tenant ID. You can lookup the correct value from the Application settings of 
+your IBM App ID service under <code>tenantId</code>, eg. <code>abcd-efgh-1234-5678-mnop</code>.</p>
+
+<p>All other values you can find in Application settings of your IBM App ID service.</p>
+
+<p>Register your redirect URL in your IBM App ID whitelist. Please, read IBM App ID <a href="https://cloud.ibm.com/docs/services/appid?topic=appid-getting-started" title="App ID Docs" target="_blank">documentation</a>. Otherwise, you 
+can get the error like this:</p>
+
+<div class="center">
+
+<p><img src="/assets/images/ibm_app_id/invalid_redirect_uri.png" alt="Invalid Redirect URI" title="" class="simple-rounded" /></p>
+
+</div>
+
+<h3 id="authorization-code-flow">Authorization Code Flow</h3>
+
+<pre><code class="php">&lt;?php
+
+require_once __DIR__ . '/vendor/autoload.php';
+
+use Jampire\OAuth2\Client\Provider\AppIdProvider;
+use Jampire\OAuth2\Client\Provider\AppIdException;
+
+session_start();
+
+try {
+    $provider = new AppIdProvider([
+        'baseAuthUri'   =&gt; '{baseAuthUri}',
+        'tenantId'      =&gt; '{tenantId}',
+        'clientId'      =&gt; '{clientId}',
+        'clientSecret'  =&gt; '{clientSecret}',
+        'redirectUri'   =&gt; '{redirectUri}', // use http://localhost for testing
+    ]);
+} catch (AppIdException $e) {
+    exit('Failed to create provider: ' . $e-&gt;getMessage());
+}
+
+if (!isset($_GET['code'])) {
+    // If we don't have an authorization code then get one
+
+    // Fetch the authorization URL from the provider; this returns the
+    // urlAuthorize option and generates and applies any necessary parameters
+    // (e.g. state).
+    $authorizationUrl = $provider-&gt;getAuthorizationUrl();
+
+    // Get the state generated for you and store it to the session.
+    $_SESSION['oauth2state'] = $provider-&gt;getState();
+
+    // Redirect the user to the authorization URL.
+    header('Location: ' . $authorizationUrl);
+    exit;
+}
+
+if (empty($_GET['state']) || (isset($_SESSION['oauth2state']) &amp;&amp; $_GET['state'] !== $_SESSION['oauth2state'])) {
+    // Check given state against previously stored one to mitigate CSRF attack
+    if (isset($_SESSION['oauth2state'])) {
+        unset($_SESSION['oauth2state']);
+    }
+    exit('Invalid state');
+
+}
+
+try {
+    // Try to get an access token using the authorization code grant.
+    $accessToken = $provider-&gt;getAccessToken('authorization_code', [
+        'code' =&gt; $_GET['code']
+    ]);
+
+    // We have an access token, which we may use in authenticated
+    // requests against the service provider's API.
+    echo '&lt;b&gt;Access Token:&lt;/b&gt; ', $accessToken-&gt;getToken(), '&lt;br&gt;';
+    echo '&lt;b&gt;Refresh Token:&lt;/b&gt; ', $accessToken-&gt;getRefreshToken(), '&lt;br&gt;';
+    echo '&lt;b&gt;Expired in:&lt;/b&gt; ', $accessToken-&gt;getExpires(), '&lt;br&gt;';
+    echo '&lt;b&gt;Already expired?&lt;/b&gt; ', ($accessToken-&gt;hasExpired() ? 'expired' : 'not expired'), '&lt;br&gt;';
+
+    // Using the access token, we may look up details about the
+    // resource owner.
+    $resourceOwner = $provider-&gt;getResourceOwner($accessToken);
+} catch (Exception $e) {
+    // Failed to get the access token or user details.
+    exit($e-&gt;getMessage());
+}
+
+</code></pre>
+
+<p>Then run in your console:</p>
+
+<pre><code class="php">php -S localhost:80
+</code></pre>
+
+<p>If you did everything right, you’ll be redirect to App ID for authentication. Depending on your configuration 
+you’ll be shown with a login widget (either App ID’s or redirected directly to the single configured IdP, 
+but that’s far less important for your use case now).</p>
+
+<p>My login page is IBM SSO one</p>
+
+<div class="center">
+
+<p><img src="/assets/images/ibm_app_id/ibm_sso_login.png" alt="IBM SSO" title="" class="simple-rounded" /></p>
+
+</div>
+
+<p>In case, you are using <strong>Facebook</strong> or <strong>Google</strong>, you will see their own login pages.</p>
+
+<h3 id="final-result">Final result</h3>
+
+<p>After successful authorization, you will be redirected to your registered URL (http://localhost in our test case). And 
+you will see something like this (note, that my <abbr title="Identity provider">IDP</abbr> is SAML):</p>
+
+<div class="center">
+
+<p><img src="/assets/images/ibm_app_id/authorization_result.png" alt="Authorization Result" title="" class="simple-rounded" /></p>
+
+</div>
+
+<p>You are now authorized in the system and can perform different tasks as authorized user.</p>
+
+<h2 id="symfony-integration">Symfony integration</h2>
+
+<blockquote>
+  <p><strong>Note</strong>: I'm using <a href="https://github.com/knpuniversity/oauth2-client-bundle" title="oauth2-client-bundle" target="_blank">knpuniversity/oauth2-client-bundle</a> for <a href="https://symfony.com/" title="Symfony" target="_blank">Symfony</a> integration. My provider was included 
+  to the bundle since <a href="https://github.com/knpuniversity/oauth2-client-bundle/releases/tag/v1.33.0" title="v1.33.0" target="_blank">version 1.33.0</a>.</p>
+  
+  <p><strong>Note</strong>: Full documentation for adding providers is available at <a href="https://github.com/knpuniversity/oauth2-client-bundle" title="oauth2-client-bundle" target="_blank">KnpUOAuth2ClientBundle</a>.<br />
+  This example is based on <a href="https://symfony.com/" title="Symfony" target="_blank">Symfony v4.3</a>.</p>
+</blockquote>
+
+<p>I assume that you already have Symfony installation, but without OAuth2 functionality. So, to start using it install
+<code>knpuniversity/oauth2-client-bundle</code> and <code>jampire/oauth2-appid</code>:</p>
+
+<pre><code>composer require knpuniversity/oauth2-client-bundle jampire/oauth2-appid
+</code></pre>
+
+<h3 id="step-1---configuring-security">Step 1 - Configuring Security</h3>
+
+<p>Configure your oauth security.</p>
+
+<pre><code class="yaml"># config/packages/security.yaml
+security:
+    providers:
+        oauth:
+            id: App\Security\UserProvider
+    firewalls:
+        dev:
+            pattern: ^/(_(profiler|wdt)|css|images|js)/
+            security: false
+        main:
+            guard:
+                authenticators:
+                    - App\Security\AppIdAuthenticator
+</code></pre>
+
+<pre><code class="yaml"># config/packages/knpu_oauth2_client.yaml
+knpu_oauth2_client:
+    # can be set to the service id of a service that implements Guzzle\ClientInterface
+    # http_client: null
+
+    # options to configure the default http client
+    # http_client_options:
+    #     timeout: 0
+    #     proxy: null
+    #     Use only with proxy option set
+    #     verify: false
+
+    clients:
+      # will create service: "knpu.oauth2.client.appid"
+      # an instance of: KnpU\OAuth2ClientBundle\Client\Provider\AppIdClient
+      # composer require jampire/oauth2-appid
+      appid:
+          # must be "appid" - it activates that type!
+          type: appid
+          # add and configure client_id and client_secret in .env* file
+          client_id: '%env(OAUTH_APPID_CLIENT_ID)%'
+          client_secret: '%env(OAUTH_APPID_CLIENT_SECRET)%'
+          # a route name you'll create
+          redirect_route: '%env(OAUTH_APPID_REDIRECT_ROUTE)%'
+          redirect_params: {}
+          # IBM App ID base URL. For example, "https://us-south.appid.cloud.ibm.com/oauth/v4". More details at https://cloud.ibm.com/docs/services/appid?topic=appid-getting-started
+          base_auth_uri: '%env(OAUTH_APPID_BASE_AUTH_URI)%'
+          # IBM App ID service tenant ID. For example, "1234-5678-abcd-efgh". More details at https://cloud.ibm.com/docs/services/appid?topic=appid-getting-started
+          tenant_id: '%env(OAUTH_APPID_TENANT_ID)%'
+          # Identity Provider code. Defaults to "saml". More details at https://cloud.ibm.com/docs/services/appid?topic=appid-getting-started
+          # idp: '%env(OAUTH_APPID_IDP)%'
+          # whether to check OAuth2 "state": defaults to true
+          # use_state: true
+</code></pre>
+
+<p>Add your credentials in env. My <abbr title="Identity provider">IDP</abbr> is SAML here.</p>
+
+<pre><code class="dotenv">OAUTH_APPID_BASE_AUTH_URI=https://us-south.appid.cloud.ibm.com/oauth/v4
+OAUTH_APPID_REDIRECT_ROUTE=connect_appid_check
+OAUTH_APPID_TENANT_ID=xxxxxxxxxxxxxxxxxxxxxxxxxx
+OAUTH_APPID_CLIENT_ID=xxxxxxxxxxxxxxxxxxxxxxxxxx
+OAUTH_APPID_CLIENT_SECRET=xxxxxxxxxxxxxxxxxxxxxx
+</code></pre>
+
+<h3 id="step-2---add-the-client-controller">Step 2 - Add the client controller</h3>
+
+<p>Create IBM App ID authenticator controller</p>
+
+<pre><code class="php">&lt;?php
+
+// src/Controller/AppIdController.php
+
+namespace App\Controller;
+
+use KnpU\OAuth2ClientBundle\Client\ClientRegistry;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Annotation\Route;
+
+/**
+ * Class AppIdController
+ *
+ * @author  Dzianis Kotau &lt;jampire.blr@gmail.com&gt;
+ * @package App\Controller
+ */
+class AppIdController extends AbstractController
+{
+    /**
+     * @Route("/connect", name="connect_appid")
+     *
+     * Authorization route
+     *
+     * @param ClientRegistry $clientRegistry
+     *
+     * @return RedirectResponse
+     * @author Dzianis Kotau &lt;jampire.blr@gmail.com&gt;
+     */
+    public function connect(ClientRegistry $clientRegistry): RedirectResponse
+    {
+        return $clientRegistry-&gt;getClient('appid')-&gt;redirect();
+    }
+
+    /**
+     * @Route("/connect/check", name="connect_appid_check")
+     *
+     * Callback route
+     *
+     * @return Response
+     * @author Dzianis Kotau &lt;jampire.blr@gmail.com&gt;
+     */
+    public function check(): Response
+    {
+        if (!$this-&gt;getUser()) {
+            return new JsonResponse([
+                'status' =&gt; false,
+                'message' =&gt; 'User not found!',
+            ]);
+        }
+
+        return $this-&gt;redirectToRoute('home');
+    }
+}
+</code></pre>
+
+<p>Create HomeController</p>
+
+<pre><code class="php">&lt;?php
+
+// src/Controller/HomeController.php
+
+namespace App\Controller;
+
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\Routing\Annotation\Route;
+
+/**
+ * Class HomeController
+ *
+ * @author  Dzianis Kotau &lt;jampire.blr@gmail.com&gt;
+ * @package App\Controller
+ */
+class HomeController extends AbstractController
+{
+    /**
+     * @Route("/", name="home")
+     * @return JsonResponse
+     * @author  Dzianis Kotau &lt;jampire.blr@gmail.com&gt;
+     */
+    public function home(): JsonResponse
+    {
+        $this-&gt;denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
+
+        return new JsonResponse([
+            'name' =&gt; $this-&gt;getUser()-&gt;getFullName(),
+            'email' =&gt; $this-&gt;getUser()-&gt;getEmail(),
+        ]);
+    }
+}
+</code></pre>
+
+<h3 id="step-3---add-the-guard-authenticator">Step 3 - Add the guard authenticator</h3>
+
+<p>Create IBM App ID authenticator guard. Below code block is published under MIT license. Please see 
+<a href="https://github.com/Jampire/oauth2-appid/blob/master/LICENSE" title="App ID OAuth License" target="_blank">License File</a> for more information.</p>
+
+<pre><code class="php">&lt;?php
+
+// src/Security/AppIdAuthenticator.php
+
+namespace App\Security;
+
+use KnpU\OAuth2ClientBundle\Client\OAuth2ClientInterface;
+use KnpU\OAuth2ClientBundle\Security\Authenticator\SocialAuthenticator;
+use KnpU\OAuth2ClientBundle\Client\ClientRegistry;
+use League\OAuth2\Client\Token\AccessToken;
+use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\RouterInterface;
+use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
+use Symfony\Component\Security\Core\Exception\AuthenticationException;
+use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Security\Core\User\UserProviderInterface;
+
+/**
+ * Class AppIdAuthenticator
+ *
+ * @author  Dzianis Kotau &lt;jampire.blr@gmail.com&gt;
+ * @package App\Security
+ */
+class AppIdAuthenticator extends SocialAuthenticator
+{
+    /** @var ClientRegistry  */
+    private $clientRegistry;
+
+    /** @var RouterInterface */
+    private $router;
+
+    public function __construct(ClientRegistry $clientRegistry, RouterInterface $router)
+    {
+        $this-&gt;clientRegistry = $clientRegistry;
+        $this-&gt;router = $router;
+    }
+
+    /**
+     * @param Request $request
+     *
+     * @return bool
+     * @author Dzianis Kotau &lt;jampire.blr@gmail.com&gt;
+     */
+    public function supports(Request $request): bool
+    {
+        $provider = $this-&gt;getClient()-&gt;getOAuth2Provider();
+
+        return ($request-&gt;isMethod('GET') &amp;&amp;
+                $request-&gt;getPathInfo() === $this-&gt;router-&gt;generate($provider-&gt;getRedirectRoute()));
+    }
+
+    /**
+     * @param Request $request
+     *
+     * @return AccessToken|mixed
+     * @author Dzianis Kotau &lt;jampire.blr@gmail.com&gt;
+     */
+    public function getCredentials(Request $request): AccessToken
+    {
+        return $this-&gt;fetchAccessToken($this-&gt;getClient());
+    }
+
+    /**
+     * @param mixed                 $credentials
+     * @param UserProviderInterface|UserProvider $userProvider
+     *
+     * @return UserInterface
+     * @author Dzianis Kotau &lt;jampire.blr@gmail.com&gt;
+     */
+    public function getUser($credentials, UserProviderInterface $userProvider): UserInterface
+    {
+        return $userProvider-&gt;loadUserByUsername($this-&gt;getClient()-&gt;fetchUserFromToken($credentials));
+    }
+
+    /**
+     * @param mixed         $credentials
+     * @param UserInterface $user
+     *
+     * @return bool
+     * @author Dzianis Kotau &lt;jampire.blr@gmail.com&gt;
+     */
+    public function checkCredentials($credentials, UserInterface $user): bool
+    {
+        $provider = $this-&gt;getClient()-&gt;getOAuth2Provider();
+
+        return $provider-&gt;validateAccessToken($credentials);
+    }
+
+    /**
+     * @return OAuth2ClientInterface|\KnpU\OAuth2ClientBundle\Client\Provider\AppIdClient
+     * @author Dzianis Kotau &lt;jampire.blr@gmail.com&gt;
+     */
+    private function getClient(): OAuth2ClientInterface
+    {
+        return $this-&gt;clientRegistry-&gt;getClient('appid');
+    }
+
+    /**
+     * @param Request        $request
+     * @param TokenInterface $token
+     * @param string         $providerKey
+     *
+     * @return Response|null
+     * @author Dzianis Kotau &lt;jampire.blr@gmail.com&gt;
+     */
+    public function onAuthenticationSuccess(Request $request, TokenInterface $token, $providerKey): ?Response
+    {
+        // let the request continue to be handled by the controller
+        return null;
+    }
+
+    /**
+     * @param Request                 $request
+     * @param AuthenticationException $exception
+     *
+     * @return Response
+     * @author Dzianis Kotau &lt;jampire.blr@gmail.com&gt;
+     */
+    public function onAuthenticationFailure(Request $request, AuthenticationException $exception): Response
+    {
+        $message = strtr($exception-&gt;getMessageKey(), $exception-&gt;getMessageData());
+
+        return new Response($message, Response::HTTP_FORBIDDEN);
+    }
+
+    /**
+     * Called when authentication is needed, but it's not sent.
+     * This redirects to the App ID authorization.
+     * @param Request                      $request
+     * @param AuthenticationException|null $authException
+     *
+     * @return RedirectResponse
+     * @author Dzianis Kotau &lt;jampire.blr@gmail.com&gt;
+     */
+    public function start(Request $request, AuthenticationException $authException = null): RedirectResponse
+    {
+        return $this-&gt;getClient()-&gt;redirect();
+    }
+}
+</code></pre>
+
+<h3 id="step-4---add-user-security">Step 4 - Add User security</h3>
+
+<p>Full documentation for adding providers is available at <a href="https://symfony.com/doc/current/security.html" title="Security" target="_blank">Symfony Security Documentation</a>.</p>
+
+<p>Create User provider class. Below code block is published under MIT license. Please see <a href="https://github.com/Jampire/oauth2-appid/blob/master/LICENSE" title="App ID OAuth License" target="_blank">License File</a> for more 
+information.</p>
+
+<pre><code class="php">&lt;?php
+
+// src/Security/UserProvider.php
+
+namespace App\Security;
+
+use KnpU\OAuth2ClientBundle\Security\User\OAuthUserProvider;
+use League\OAuth2\Client\Provider\ResourceOwnerInterface;
+use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
+use Symfony\Component\Security\Core\User\UserInterface;
+use function get_class;
+
+/**
+ * Class UserProvider
+ *
+ * @author  Dzianis Kotau &lt;jampire.blr@gmail.com&gt;
+ * @package App\Security
+ */
+class UserProvider extends OAuthUserProvider
+{
+    private $roles;
+
+    public function __construct(array $roles = ['ROLE_USER', 'ROLE_OAUTH_USER'])
+    {
+        $this-&gt;roles = $roles;
+        parent::__construct($roles);
+    }
+
+    /**
+     * @param ResourceOwnerInterface $resourceOwner
+     *
+     * @return UserInterface
+     * @author Dzianis Kotau &lt;jampire.blr@gmail.com&gt;
+     */
+    public function loadUserByUsername($resourceOwner): UserInterface
+    {
+        return new User($resourceOwner, $this-&gt;roles);
+    }
+
+    public function supportsClass($class): bool
+    {
+        return User::class === $class;
+    }
+
+    /**
+     * @param UserInterface $user
+     *
+     * @return UserInterface
+     * @author Dzianis Kotau &lt;jampire.blr@gmail.com&gt;
+     */
+    public function refreshUser(UserInterface $user): UserInterface
+    {
+        if (!$user instanceof User) {
+            throw new UnsupportedUserException(sprintf('Instances of "%s" are not supported.', get_class($user)));
+        }
+
+        return $this-&gt;loadUserByUsername($user-&gt;getResourceOwner());
+    }
+}
+</code></pre>
+
+<p>Create User class. Below code block is published under MIT license. Please see <a href="https://github.com/Jampire/oauth2-appid/blob/master/LICENSE" title="App ID OAuth License" target="_blank">License File</a> for more information.</p>
+
+<pre><code class="php">&lt;?php
+
+// src/Security/User.php
+
+namespace App\Security;
+
+use KnpU\OAuth2ClientBundle\Security\User\OAuthUser;
+use League\OAuth2\Client\Provider\ResourceOwnerInterface;
+
+/**
+ * Class User
+ *
+ * @author  Dzianis Kotau &lt;jampire.blr@gmail.com&gt;
+ * @package App\Security
+ */
+class User extends OAuthUser
+{
+    /** @var string */
+    private $fullName;
+
+    /** @var string */
+    private $cNum;
+
+    /** @var string */
+    private $lotusNotesId;
+
+    /** @var array */
+    private $ibmInfo = [];
+
+    /** @var string */
+    private $location;
+
+    /** @var ResourceOwnerInterface  */
+    private $resourceOwner;
+
+    /**
+     * User constructor.
+     *
+     * @param array $roles
+     * @param ResourceOwnerInterface $resourceOwner
+     * @author Dzianis Kotau &lt;jampire.blr@gmail.com&gt;
+     */
+    public function __construct(ResourceOwnerInterface $resourceOwner, array $roles)
+    {
+        $this-&gt;resourceOwner = $resourceOwner;
+        $this-&gt;setFullName($this-&gt;resourceOwner-&gt;getFullName());
+        $this-&gt;setCnum($this-&gt;resourceOwner-&gt;getCnum());
+        $this-&gt;setLotusNotesId($this-&gt;resourceOwner-&gt;getLotusNotesId());
+        $this-&gt;setIbmInfo($this-&gt;resourceOwner-&gt;getIbmInfo());
+        $this-&gt;setLocation($this-&gt;resourceOwner-&gt;getLocation());
+
+        parent::__construct($resourceOwner-&gt;getEmail(), $roles);
+    }
+
+    /**
+     * @return string|null
+     * @author Dzianis Kotau &lt;jampire.blr@gmail.com&gt;
+     */
+    public function getEmail(): ?string
+    {
+        return $this-&gt;getUsername();
+    }
+
+    /**
+     * @author Dzianis Kotau &lt;jampire.blr@gmail.com&gt;
+     * @return string
+     */
+    public function getFullName(): ?string
+    {
+        return $this-&gt;fullName;
+    }
+
+    /**
+     * @author Dzianis Kotau &lt;jampire.blr@gmail.com&gt;
+     * @param string $fullName
+     *
+     * @return self
+     */
+    public function setFullName(string $fullName): self
+    {
+        $this-&gt;fullName = $fullName;
+
+        return $this;
+    }
+
+    /**
+     * @author Dzianis Kotau &lt;jampire.blr@gmail.com&gt;
+     * @return string
+     */
+    public function getCnum(): ?string
+    {
+        return $this-&gt;cNum;
+    }
+
+    /**
+     * @param string $cNum
+     *
+     * @return self
+     * @author Dzianis Kotau &lt;jampire.blr@gmail.com&gt;
+     */
+    public function setCnum(string $cNum): self
+    {
+        $this-&gt;cNum = $cNum;
+
+        return $this;
+    }
+
+    /**
+     * @author Dzianis Kotau &lt;jampire.blr@gmail.com&gt;
+     * @return string
+     */
+    public function getLotusNotesId(): ?string
+    {
+        return $this-&gt;lotusNotesId;
+    }
+
+    /**
+     * @author Dzianis Kotau &lt;jampire.blr@gmail.com&gt;
+     * @param string $lotusNotesId
+     *
+     * @return self
+     */
+    public function setLotusNotesId(string $lotusNotesId): self
+    {
+        $this-&gt;lotusNotesId = $lotusNotesId;
+
+        return $this;
+    }
+
+    /**
+     * @author Dzianis Kotau &lt;jampire.blr@gmail.com&gt;
+     * @return array
+     */
+    public function getIbmInfo(): array
+    {
+        return $this-&gt;ibmInfo;
+    }
+
+    /**
+     * @author Dzianis Kotau &lt;jampire.blr@gmail.com&gt;
+     * @param array $ibmInfo
+     *
+     * @return self
+     */
+    public function setIbmInfo(array $ibmInfo = []): self
+    {
+        $this-&gt;ibmInfo = $ibmInfo;
+
+        return $this;
+    }
+
+    /**
+     * @author Dzianis Kotau &lt;jampire.blr@gmail.com&gt;
+     * @return string
+     */
+    public function getLocation(): ?string
+    {
+        return $this-&gt;location;
+    }
+
+    /**
+     * @author Dzianis Kotau &lt;jampire.blr@gmail.com&gt;
+     * @param string $location
+     *
+     * @return self
+     */
+    public function setLocation(string $location): self
+    {
+        $this-&gt;location = $location;
+
+        return $this;
+    }
+
+    /**
+     * @author Dzianis Kotau &lt;jampire.blr@gmail.com&gt;
+     * @return ResourceOwnerInterface
+     */
+    public function getResourceOwner(): ResourceOwnerInterface
+    {
+        return $this-&gt;resourceOwner;
+    }
+}
+</code></pre>
+
+<p>Then run your application</p>
+
+<pre><code>symfony server:start --no-tls
+</code></pre>
+
+<p>and try to login into it in the browser.</p>
+]]></content>
+        </entry>
+    </feed>

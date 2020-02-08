@@ -1,0 +1,33 @@
+{
+  "entrypoints": {
+    "app": {
+      "css": [
+        "/build/app.css"
+      ],
+      "js": [
+        "/build/app.js"
+      ]
+    },
+    "theme": {
+      "css": [
+        "/build/theme.css"
+      ],
+      "js": [
+        "/build/theme.js"
+      ]
+    },
+    "error/header": {
+      "js": [
+        "/build/error/header.js"
+      ]
+    },
+    "error/main": {
+      "css": [
+        "/build/error/main.css"
+      ],
+      "js": [
+        "/build/error/main.js"
+      ]
+    }
+  }
+}

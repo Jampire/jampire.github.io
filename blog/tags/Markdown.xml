@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+    <title><![CDATA[Dzianis Kotau Tech Blog]]></title>
+    <link href="https://dzianiskotau.com/blog/tags/Markdown.xml" rel="self"/>
+    <link href="https://dzianiskotau.com/"/>
+    <updated>2020-02-08T22:59:57+03:00</updated>
+    <id>https://dzianiskotau.com/</id>
+            <author>
+            <name><![CDATA[Dzianis Kotau]]></name>                    </author>
+        <generator uri="https://sculpin.io/">Sculpin</generator>
+            <entry>
+            <title type="html"><![CDATA[Auto Generating Table of Contents in Markdown]]></title>
+            <link href="https://dzianiskotau.com/blog/php/auto-generating-toc-markdown"/>
+            <updated>2020-01-26T10:47:00+03:00</updated>
+            <id>https://dzianiskotau.com/blog/php/auto-generating-toc-markdown</id>
+            <content type="html"><![CDATA[<p>Most popular PHP Markdown parsers like <a href="https://github.com/michelf/php-markdown" title="Markdown Extra" target="_blank">Markdown Extra</a> (is used by <a href="https://sculpin.io/" title="Sculpin" target="_blank">Sculpin</a>) or <a href="https://github.com/erusev/parsedown-extra" title="Parsedown Extra" target="_blank">Parsedown Extra</a> 
+(is used by <a href="https://jigsaw.tighten.co/" title="Jigsaw" target="_blank">Jigsaw</a>) can't generated Table of Contents. Despite this, Sculpin can generate <abbr title="Table of Contents">TOC</abbr>.
+I became interested in it and researched how Sculpin does this.</p>
+
+<h2 id="table-of-contents">Table of Contents</h2>
+
+<ul>
+<li><a href="#researching">Researching</a></li>
+<li><a href="#auto-generating">Auto generating</a></li>
+<li><a href="#standalone-library">Standalone library</a></li>
+<li><a href="#additional-notes">Additional notes</a></li>
+</ul>
+
+<h2 id="researching">Researching</h2>
+
+<p>While reading Sculpin's core code I found such class:</p>
+
+<pre><code class="php">&lt;?php
+
+// vendor/sculpin/sculpin/src/Sculpin/Bundle/MarkdownBundle/MarkdownConverter.php
+
+// ...
+
+final class MarkdownConverter implements ConverterInterface, EventSubscriberInterface
+{
+    public function __construct(ParserInterface $markdown, array $extensions = [])
+    {
+        $this-&gt;markdown = $markdown;
+        if ($this-&gt;markdown instanceof Markdown) {
+            $this-&gt;markdown-&gt;header_id_func = [$this, 'generateHeaderId'];
+        }
+        $this-&gt;extensions = $extensions;
+    }
+
+    // ...
+
+    /**
+     * This method is called to generate an id="" attribute for a header.
+     *
+     * @internal
+     *
+     * @param string $headerText raw markdown input for the header name
+     */
+    public function generateHeaderId(string $headerText): string
+    {
+
+        // $headerText is completely raw markdown input. We need to strip it
+        // from all markup, because we are only interested in the actual 'text'
+        // part of it.
+
+        // Step 1: Remove html tags.
+        $result = strip_tags($headerText);
+
+        // Step 2: Remove all markdown links. To do this, we simply remove
+        // everything between ( and ) if the ( occurs right after a ].
+        $result = preg_replace('%
+            (?&lt;= \\]) # Look behind to find ]
+            (
+                \\(     # match (
+                [^\\)]* # match everything except )
+                \\)     # match )
+            )
+
+            %x', '', $result);
+
+        // Step 3: Convert spaces to dashes, and remove unwanted special
+        // characters.
+        $map = [
+            ' ' =&gt; '-',
+            '(' =&gt; '',
+            ')' =&gt; '',
+            '[' =&gt; '',
+            ']' =&gt; '',
+        ];
+        return rawurlencode(strtolower(
+            strtr($result, $map)
+        ));
+    }
+}
+</code></pre>
+
+<p>Look at his line of code</p>
+
+<pre><code class="php">$this-&gt;markdown-&gt;header_id_func = [$this, 'generateHeaderId'];
+</code></pre>
+
+<p><code>header_id_func</code> is Markdown's callback function to generate header id attribute:</p>
+
+<pre><code class="php">&lt;?php
+
+// vendor/michelf/php-markdown/Michelf/Markdown.php
+
+/**
+ * Optional header id="" generation callback function.
+ * @var callable|null
+ */
+public $header_id_func = null;
+
+/**
+ * If a header_id_func property is set, we can use it to automatically
+ * generate an id attribute.
+ *
+ * This method returns a string in the form id="foo", or an empty string
+ * otherwise.
+ * @param  string $headerValue
+ * @return string
+ */
+protected function _generateIdFromHeaderValue($headerValue) {
+    if (!is_callable($this-&gt;header_id_func)) {
+        return "";
+    }
+
+    $idValue = call_user_func($this-&gt;header_id_func, $headerValue);
+    if (!$idValue) {
+        return "";
+    }
+
+    return ' id="' . $this-&gt;encodeAttribute($idValue) . '"';
+}
+</code></pre>
+
+<p>and <code>generateHeaderId()</code> method from Sculpin core does the rest of the job.</p>
+
+<h2 id="auto-generating">Auto generating</h2>
+
+<div class="center">
+
+<p><img src="/assets/images/auto_generating_toc_markdown/phpstrom_markdown_plugin.png" alt="Phpstrom Markdown Plugin" title="" class="simple-rounded" /></p>
+
+</div>
+
+<p>The good news here is that you don't even need to care about manual and unique <code>id</code> generating. <a href="https://www.jetbrains.com/phpstorm/" title="PhpStorm" target="_blank">PhpStorm IDE</a> 
+(that most PHP developers should use) with Markdown (bundled) plugin will help you. PhpStorm uses the same algorithm 
+for <code>id</code> generating that Sculpin's <code>generateHeaderId()</code> method does. All you need to do is to write your Markdown 
+article with headers, create <abbr title="Table of Contents">TOC</abbr> and then use PhpStorm's autocompletion:</p>
+
+<div class="center">
+
+<p><img src="/assets/images/auto_generating_toc_markdown/auto_generating.gif" alt="TOC Auto Generating" title="" class="simple-rounded" /></p>
+
+</div>
+
+<p>By the way, <a href="https://github.github.com/gfm/" title="GFM" target="_blank">GitHub</a> uses the same algorithm too. So, you can use PhpStorm to easily create README.md and 
+other Markdown files.</p>
+
+<h2 id="standalone-library">Standalone library</h2>
+
+<p>I decided to extract Sculpin's solution into standalone library that anyone can use it in their own work. I published 
+sources on <a href="https://github.com/Jampire/toc-markdown-extra" title="TOC Markdown Extra" target="_blank">my GitHub</a>. Please, feel free to use it.</p>
+
+<h2 id="additional-notes">Additional notes</h2>
+
+<p><a href="https://github.com/michelf/php-markdown/pull/26#issuecomment-5253043" title="" target="_blank">The point of view</a> of PHP Markdown's author is that <abbr title="Table of Contents">TOC</abbr> generating is <strong>not</strong> the work of his parser. So, it will 
+be never included in his library.</p>
+]]></content>
+        </entry>
+    </feed>
